@@ -6,8 +6,8 @@ langchain-chroma>=0.1.4
 langchain-text-splitters>=0.3.0
 langgraph>=0.2.50
 
-# ==== LLM Backend (Aliyun DashScope / Qwen) ====
-dashscope>=1.20.0
+# ==== LLM Backend (Local Ollama) ====
+langchain-ollama>=0.2.0
 
 # ==== Document Loading ====
 pypdf>=4.0.0

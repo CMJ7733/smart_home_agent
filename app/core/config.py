@@ -6,10 +6,10 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    # DashScope / Qwen
-    dashscope_api_key: str = ""
-    chat_model_name: str = "qwen3-max"
-    embedding_model_name: str = "text-embedding-v4"
+    # Ollama (local)
+    ollama_base_url: str = "http://localhost:11434"
+    chat_model_name: str = "gemma4:e4b"
+    embedding_model_name: str = "nomic-embed-text-v2-moe"
 
     # Redis (Phase 2)
     redis_url: str = "redis://localhost:6379/0"
