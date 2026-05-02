@@ -53,6 +53,16 @@ python -c "from rag.vector_store import VectorStoreService; VectorStoreService()
 streamlit run app.py
 ```
 
+FastAPI接口
+```bash
+uvicorn app.api.endpoints:router --reload
+```
+
+WebSocket
+```bash
+streamlit run streamlit_debug/app.py
+```
+
 ## Current Model Config
 
 Environment variables:
