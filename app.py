@@ -1,14 +1,15 @@
 import time
 
 import streamlit as st
-from agent.react_agent import ReactAgent
+from app.agent.graph import graph
+from app.agent.state import AgentState
 
 # 标题
-st.title("智扫通机器人智能客服")
+st.title("声控未来家Agent")
 st.divider()
 
 if "agent" not in st.session_state:
-    st.session_state["agent"] = ReactAgent()
+    st.session_state["agent"] = graph
 
 if "message" not in st.session_state:
     st.session_state["message"] = []
@@ -24,18 +25,24 @@ if prompt:
     st.session_state["message"].append({"role": "user", "content": prompt})
 
     response_messages = []
-    with st.spinner("智能客服思考中..."):
-        res_stream = st.session_state["agent"].execute_stream(prompt)
+    with st.spinner("智能家居agent思考中..."):
+        # 构建初始状态
+        state: AgentState = {
+            "session_id": "streamlit-session",
+            "user_id": "streamlit-user",
+            "user_input": prompt,
+            "chat_history": [],
+            "extracted_entities": {},
+            "retrieved_context": [],
+            "current_intent": "",  # router_node 会自动推断
+            "tool_calls": [],
+            "final_response": "",
+            "trace_id": "streamlit-trace",
+        }
 
-        def capture(generator, cache_list):
+        result = st.session_state["agent"].invoke(state)
+        final_response = result.get("final_response", "（无回复）")
 
-            for chunk in generator:
-                cache_list.append(chunk)
-
-                for char in chunk:
-                    time.sleep(0.01)
-                    yield char
-
-        st.chat_message("assistant").write_stream(capture(res_stream, response_messages))
-        st.session_state["message"].append({"role": "assistant", "content": response_messages[-1]})
+        st.chat_message("assistant").write(final_response)
+        st.session_state["message"].append({"role": "assistant", "content": final_response})
         st.rerun()
