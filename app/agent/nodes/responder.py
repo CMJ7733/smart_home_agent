@@ -7,4 +7,7 @@ from app.agent.state import AgentState
 
 
 def responder_node(state: AgentState) -> AgentState:
-    raise NotImplementedError("Phase 1: 待实现回复节点")
+    """统一回复组装节点 (Phase 1 占位)"""
+    retrieved = state.get("retrieved_context", [])
+    context_str = "\n".join(retrieved) if retrieved else "无相关上下文"
+    return {"final_response": f"[Phase 1 占位] 检索到 {len(retrieved)} 条相关文档:\n{context_str}"}

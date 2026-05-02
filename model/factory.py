@@ -1,6 +1,6 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Union
 
 from langchain_core.embeddings import Embeddings
 from langchain_ollama import ChatOllama, OllamaEmbeddings
@@ -10,7 +10,7 @@ from app.core.config import get_settings
 
 class BaseModelFactory(ABC):
     @abstractmethod
-    def generator(self) -> Optional[Embeddings | ChatOllama]:
+    def generator(self) -> Optional[Union[Embeddings, ChatOllama]]:
         raise NotImplementedError
 
 
