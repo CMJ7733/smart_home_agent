@@ -1,11 +1,37 @@
-# TODO (Phase 2): 记忆写入节点（每条路径末尾异步触发）
-# 短期记忆: 将本轮对话追加到 Redis（key: chat:{session_id}, TTL 24h）
-# 长期记忆: 触发后台任务，LLM 抽取用户偏好并写入 Milvus（Phase 2）
-# Phase 1 占位: 无操作（测试时透传状态）
-
+from langchain_core.messages import HumanMessage, AIMessage
 from app.agent.state import AgentState
+from app.memory.short_term import ShortTermMemory
+from app.core.config import get_settings
+from utils.logger_handler import logger
+
+_memory: ShortTermMemory | None = None
+
+
+def _get_memory() -> ShortTermMemory:
+    global _memory
+    if _memory is None:
+        s = get_settings()
+        _memory = ShortTermMemory(redis_url=s.redis_url, ttl=s.redis_ttl)
+    return _memory
 
 
 def memory_writer_node(state: AgentState) -> AgentState:
-    """记忆写入节点 (Phase 1 占位，透传状态)"""
+    session_id = state.get("session_id", "")
+    user_input = state.get("user_input", "")
+    final_response = state.get("final_response", "")
+
+    if not session_id or not final_response:
+        return {}
+
+    try:
+        mem = _get_memory()
+        history = mem.load(session_id)
+        history.extend([
+            HumanMessage(content=user_input),
+            AIMessage(content=final_response),
+        ])
+        mem.save(session_id, history)
+    except Exception as e:
+        logger.warning(f"memory_writer: Redis write failed [{session_id}]: {e}")
+
     return {}

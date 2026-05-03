@@ -9,12 +9,23 @@
 #   POST /api/v1/feedback                         用户反馈（Phase 3）
 #   GET  /api/v1/eval/dashboard                   评估看板（Phase 3）
 
+import uuid
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.models.schemas import ChatRequest, ChatResponse
 from app.agent.graph import graph
 from app.agent.state import AgentState
+from app.memory.short_term import ShortTermMemory
+from app.core.config import get_settings
 
 router = APIRouter()
+_memory = ShortTermMemory(redis_url=get_settings().redis_url, ttl=get_settings().redis_ttl)
+
+
+def _load_history(session_id: str) -> list:
+    try:
+        return _memory.load(session_id)
+    except Exception:
+        return []
 
 
 @router.get("/health")
@@ -29,16 +40,16 @@ async def chat(request: ChatRequest) -> ChatResponse:
         "session_id": request.session_id,
         "user_id": request.user_id,
         "user_input": request.message,
-        "chat_history": [],
+        "chat_history": _load_history(request.session_id),
         "extracted_entities": {},
         "retrieved_context": [],
         "current_intent": "",
         "tool_calls": [],
         "final_response": "",
-        "trace_id": f"trace-{request.session_id}",
+        "trace_id": str(uuid.uuid4()),
     }
 
-    result = graph.invoke(state)
+    result = await graph.ainvoke(state)
     return ChatResponse(
         session_id=request.session_id,
         response=result.get("final_response", ""),
@@ -61,17 +72,16 @@ async def chat_stream(websocket: WebSocket, session_id: str):
                 "session_id": session_id,
                 "user_id": user_id,
                 "user_input": user_input,
-                "chat_history": [],
+                "chat_history": _load_history(session_id),
                 "extracted_entities": {},
                 "retrieved_context": [],
                 "current_intent": "",
                 "tool_calls": [],
                 "final_response": "",
-                "trace_id": f"trace-{session_id}",
+                "trace_id": str(uuid.uuid4()),
             }
 
-            # 直接获取最终结果（简化版）
-            result = graph.invoke(state)
+            result = await graph.ainvoke(state)
             await websocket.send_json({
                 "type": "final",
                 "response": result.get("final_response", ""),

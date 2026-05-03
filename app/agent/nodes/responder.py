@@ -30,7 +30,7 @@ def responder_node(state: AgentState) -> AgentState:
         response = chat_model.invoke(messages)
         return {"final_response": response.content}
     elif intent == "device_control":
-        actions = ", ".join([f"{tc.get('tool')}" for tc in tool_calls])
+        actions = "、".join([f"{tc.get('action')}({tc.get('result', '')})" for tc in tool_calls])
         return {"final_response": f"已完成以下操作：{actions}"}
     elif intent == "scene":
         scene_name = next(
@@ -38,7 +38,7 @@ def responder_node(state: AgentState) -> AgentState:
              if kw in state.get("user_input", "")), None
         )
         prefix = f"已启动{scene_name}，" if scene_name else "场景已执行，"
-        actions = ", ".join([f"{tc.get('tool')}" for tc in tool_calls]) if tool_calls else "无设备动作"
+        actions = "、".join([f"{tc.get('action')}({tc.get('result', '')})" for tc in tool_calls]) if tool_calls else "无设备动作"
         return {"final_response": f"{prefix}执行了以下动作：{actions}"}
     elif intent == "chitchat":
         return {"final_response": state.get("final_response", "好的")}

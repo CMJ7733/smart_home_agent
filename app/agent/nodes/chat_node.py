@@ -18,9 +18,9 @@ def _load_prompt() -> str:
 def chat_node(state: AgentState) -> AgentState:
     """闲聊节点: 调用 LLM 生成回复"""
     system_prompt = _load_prompt()
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": state["user_input"]},
-    ]
+    messages = [{"role": "system", "content": system_prompt}]
+    for msg in state.get("chat_history", []):
+        messages.append({"role": msg.type if hasattr(msg, "type") else "user", "content": msg.content})
+    messages.append({"role": "user", "content": state["user_input"]})
     response = chat_model.invoke(messages)
     return {"final_response": response.content}
