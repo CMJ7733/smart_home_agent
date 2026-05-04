@@ -10,15 +10,22 @@
 #   GET  /api/v1/eval/dashboard                   评估看板（Phase 3）
 
 import uuid
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+import asyncio
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, BackgroundTasks
 from app.models.schemas import ChatRequest, ChatResponse
 from app.agent.graph import graph
 from app.agent.state import AgentState
 from app.memory.short_term import ShortTermMemory
+from app.memory.memory_graph import get_memory_graph
 from app.core.config import get_settings
 
 router = APIRouter()
 _memory = ShortTermMemory(redis_url=get_settings().redis_url, ttl=get_settings().redis_ttl)
+
+
+def _extract_preferences_task(user_id: str, chat_history: list):
+    """Fire-and-forget background task — failures are logged inside extract_and_save."""
+    get_memory_graph().extract_and_save(user_id, chat_history)
 
 
 def _load_history(session_id: str) -> list:
@@ -34,7 +41,7 @@ async def health():
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest) -> ChatResponse:
+async def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> ChatResponse:
     """同步 REST 对话接口"""
     state: AgentState = {
         "session_id": request.session_id,
@@ -50,6 +57,10 @@ async def chat(request: ChatRequest) -> ChatResponse:
     }
 
     result = await graph.ainvoke(state)
+
+    # Schedule preference extraction AFTER this turn completes (fire-and-forget)
+    background_tasks.add_task(_extract_preferences_task, request.user_id, state["chat_history"])
+
     return ChatResponse(
         session_id=request.session_id,
         response=result.get("final_response", ""),
@@ -88,5 +99,8 @@ async def chat_stream(websocket: WebSocket, session_id: str):
                 "trace_id": result.get("trace_id", ""),
                 "intent": result.get("current_intent", ""),
             })
+
+            # Trigger preference extraction after every turn (fire-and-forget)
+            asyncio.create_task(_extract_preferences_task(user_id, state["chat_history"]))
     except WebSocketDisconnect:
         pass
