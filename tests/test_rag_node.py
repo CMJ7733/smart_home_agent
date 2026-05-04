@@ -3,7 +3,7 @@
 
 用法:
     $env:TEST_INTENT="kb_query"
-    python -m tests.test_rag_node
+    python
 """
 
 import os

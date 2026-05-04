@@ -5,16 +5,11 @@
 # Phase 2: 替换为 Milvus 混合检索 + BGE-Reranker，接口不变
 
 from app.agent.state import AgentState
-from rag.vector_store import VectorStoreService
-
-
-# 复用现有的 Chroma 向量库
-_vector_store = VectorStoreService()
+from app.rag.retriever import get_hybrid_retriever
 
 
 def rag_node(state: AgentState) -> AgentState:
-    """RAG 检索节点: 从 Chroma 向量库检索相关文档"""
+    """RAG 检索节点: BM25 + 向量混合检索，BGE-Reranker 重排，返回 top-3"""
     user_input = state.get("user_input", "")
-    retriever = _vector_store.get_retriever()
-    docs = retriever.invoke(user_input)
+    docs = get_hybrid_retriever().retrieve(user_input)
     return {"retrieved_context": [doc.page_content for doc in docs]}
