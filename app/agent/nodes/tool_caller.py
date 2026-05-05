@@ -18,7 +18,7 @@ def tool_caller_node(state: AgentState) -> AgentState:
 
     tool_calls = []
     try:
-        if device in ("灯", "灯光"):
+        if device in ("灯", "灯光", "灯具"):
             on = action in ("开", "打开", "开启")
             result = toggle_light.invoke({"room": room, "on": on})
         elif device in ("空调", "温度"):

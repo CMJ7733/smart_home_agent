@@ -6,8 +6,10 @@
 from app.agent.state import AgentState
 from app.memory.memory_graph import get_memory_graph
 from model.factory import chat_model
-import json, re
+import json, re, logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 PROMPT_PATH = Path(__file__).resolve().parent.parent.parent.parent / "prompts" / "entity_extract_prompt.txt"
 
@@ -32,11 +34,25 @@ def entity_extractor_node(state: AgentState) -> AgentState:
     user_input = state["user_input"]
     user_id = state.get("user_id", "")
     prompt_template = _load_prompt()
-    prompt = prompt_template.replace("{user_input}", user_input)
-    messages = [{"role": "user", "content": prompt}]
+    messages = [
+        {"role": "system", "content": prompt_template},
+        {"role": "user", "content": f"请从以下用户输入中提取实体：{user_input}"},
+    ]
     response = chat_model.invoke(messages)
-    match = re.search(r'\{[^}]+\}', response.content, re.DOTALL)
-    entities = json.loads(match.group()) if match else {}
+
+    # 兼容 markdown 代码块格式 ```json ... ```
+    content = response.content.strip()
+    if content.startswith("```"):
+        content = content.split("```")[1] or content.split("```")[2] or content
+    content = content.strip()
+
+    # 使用 JSONDecoder 解析，支持嵌套 JSON
+    try:
+        decoder = json.JSONDecoder()
+        entities, _ = decoder.raw_decode(content)
+    except (json.JSONDecodeError, ValueError):
+        logger.warning(f"[EntityExtractor] LLM response is not valid JSON: {response.content[:200]}")
+        entities = {}
 
     # Phase 2: resolve ambiguous references using long-term memory
     if _is_ambiguous(user_input) and user_id:

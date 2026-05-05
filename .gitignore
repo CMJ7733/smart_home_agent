@@ -17,3 +17,6 @@ rag/chroma_db/
 
 .pytest_cache/
 .mypy_cache/
+
+*.text
+*.yml

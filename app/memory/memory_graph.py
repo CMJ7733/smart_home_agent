@@ -57,8 +57,8 @@ def _ensure_collection_exists(host: str, port: str):
     )
     collection = Collection(name=_COLLECTION_NAME, schema=schema, using="default")
 
-    # Scalar index on user_id
-    collection.create_index("user_id", {"index_type": "STL_SORT", "field": "user_id"})
+    # Scalar index on user_id (VARCHAR use INVERTED index)
+    collection.create_index("user_id", {"index_type": "INVERTED", "field": "user_id"})
 
     # Vector index
     collection.create_index(
@@ -119,11 +119,13 @@ class MemoryGraph:
             response = chat_model.invoke(messages)
 
             # 3. Parse JSON from LLM response
-            match = re.search(r'\{[^}]+\}', response.content, re.DOTALL)
-            if not match:
-                logger.warning("[MemoryGraph] LLM response did not contain JSON")
+            try:
+                decoder = json.JSONDecoder()
+                raw, end_idx = decoder.raw_decode(response.content)
+                raw = json.dumps(raw)  # 重新序列化为字符串
+            except ValueError:
+                logger.warning("[MemoryGraph] LLM response did not contain valid JSON")
                 return
-            raw = json.loads(match.group())
 
             # 4. Inject metadata
             raw["updated_at"] = datetime.now(timezone.utc).isoformat()
