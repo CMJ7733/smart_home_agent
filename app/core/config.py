@@ -6,10 +6,18 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
+    # LLM Provider: "ollama" | "api"
+    llm_provider: str = "ollama"
+
     # Ollama (local)
     ollama_base_url: str = "http://localhost:11434"
-    chat_model_name: str = "gemma4:e4b"
+    chat_model_name: str = "qwen3.5:2b"
     embedding_model_name: str = "nomic-embed-text-v2-moe"
+
+    # OpenAI-compatible API (any provider)
+    api_base_url: str = ""        # e.g. https://api.deepseek.com/v1
+    api_key: str = ""
+    api_model_name: str = ""      # e.g. deepseek-chat
 
     # Redis (Phase 2)
     redis_url: str = "redis://localhost:6379/0"
@@ -22,6 +30,9 @@ class Settings(BaseSettings):
 
     # Milvus (Phase 2)
     milvus_uri: str = "http://localhost:19530"
+
+    # Evaluation DB (Phase 3)
+    eval_db_path: str = "data/eval_logs.db"
 
     class Config:
         env_file = ".env"
