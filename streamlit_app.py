@@ -72,22 +72,27 @@ with tab1:
                         "session_id": st.session_state.session_id,
                         "user_id": st.session_state.user_id,
                     },
-                    timeout=30,
+                    timeout=120,
                 )
                 resp.raise_for_status()
                 data = resp.json()
 
+                content = data.get("response", "") or "（后端返回了空字符串）"
                 st.session_state.last_trace_id = data.get("trace_id", "")
                 st.session_state.messages.append({
                     "role": "assistant",
-                    "content": data.get("response", "（无响应）"),
+                    "content": content,
                     "meta": {
                         "intent": data.get("intent", ""),
                         "trace_id": data.get("trace_id", ""),
                     }
                 })
             except Exception as e:
-                st.error(f"请求失败: {e}")
+                # 把错误也追加到消息流，避免 st.rerun() 后错误消失
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": f"⚠️ 请求失败: {e}",
+                })
 
         st.rerun()
 
