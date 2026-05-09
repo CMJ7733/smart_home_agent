@@ -1,4 +1,5 @@
 import os
+import re
 from abc import ABC, abstractmethod
 from typing import Optional, Union
 
@@ -6,6 +7,11 @@ from langchain_core.embeddings import Embeddings
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 
 from app.core.config import get_settings
+
+
+def strip_think(content: str) -> str:
+    """剥除 reasoning model 输出的 <think>...</think> 块，返回实际回答。"""
+    return re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
 
 
 class BaseModelFactory(ABC):

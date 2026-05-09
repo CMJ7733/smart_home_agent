@@ -28,7 +28,8 @@ def responder_node(state: AgentState) -> AgentState:
         prompt = prompt_template.replace("{input}", state.get("user_input", "")).replace("{context}", context)
         messages = [{"role": "user", "content": prompt}]
         response = chat_model.invoke(messages)
-        return {"final_response": response.content}
+        from model.factory import strip_think
+        return {"final_response": strip_think(response.content)}
     elif intent == "device_control":
         actions = "、".join([f"{tc.get('action')}({tc.get('result', '')})" for tc in tool_calls])
         return {"final_response": f"已完成以下操作：{actions}"}

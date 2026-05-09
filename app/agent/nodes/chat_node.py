@@ -32,4 +32,5 @@ def chat_node(state: AgentState) -> AgentState:
 
     messages.append(HumanMessage(content=state["user_input"]))
     response = chat_model.invoke(messages)
-    return {"final_response": response.content}
+    from model.factory import strip_think
+    return {"final_response": strip_think(response.content)}
