@@ -16,14 +16,14 @@ class Settings(BaseSettings):
 
     # OpenAI-compatible API (any provider)
     api_base_url: str = "https://api.minimaxi.com/v1"        # e.g. https://api.deepseek.com/v1
-    api_key: str = "sk-cp-bEf3A1R3SCnWZ15v3BN39jCYO8YuB_A-rW_Mo1_C5zZvvjKvTyxUmvtyG37JgVbZkfFAkLXmibeF3-i5LCSghrvUUCFEpfAFC7MQkaS9UhY_F7Krni_kMsE"
+    api_key: str = ""
     api_model_name: str = "minimax-m2.7"      # e.g. deepseek-chat
 
     # Embedding provider: "ollama" | "api" (独立于 llm_provider，默认用 ollama)
     embed_provider: str = "api"
     embed_model_name: str = "BAAI/bge-m3"
     embed_api_base_url: str = "https://api.siliconflow.cn/v1"
-    embed_api_key: str = "sk-ygiqybajisgfbnzfdqxfsahsvsxzhtwxgythbrzhjglvaudf"       # 独立的 embedding API key，为空时复用 api_key
+    embed_api_key: str = ""       # 独立的 embedding API key，为空时复用 api_key
 
     # Redis (Phase 2)
     redis_url: str = "redis://localhost:6379/0"
