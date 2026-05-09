@@ -40,11 +40,22 @@ def entity_extractor_node(state: AgentState) -> AgentState:
     ]
     response = chat_model.invoke(messages)
 
-    # 兼容 markdown 代码块格式 ```json ... ```
     content = response.content.strip()
+
+    # 剥掉 reasoning model 的 <think>...</think> 块（minimax-m2、deepseek-r1、qwen3-thinking 等）
+    content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+
+    # 兼容 markdown 代码块格式 ```json ... ```
     if content.startswith("```"):
-        content = content.split("```")[1] or content.split("```")[2] or content
+        parts = content.split("```")
+        content = parts[1] if len(parts) > 1 else content
+        content = re.sub(r"^[a-zA-Z]+\n", "", content, count=1)  # 去掉可选的语言标签 "json\n"
     content = content.strip()
+
+    # 容错：定位首个 '{' 作为 JSON 起点，避免前置噪声导致解析失败
+    brace = content.find("{")
+    if brace > 0:
+        content = content[brace:]
 
     # 使用 JSONDecoder 解析，支持嵌套 JSON
     try:

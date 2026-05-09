@@ -17,29 +17,42 @@ class BaseModelFactory(ABC):
 class ChatModelFactory(BaseModelFactory):
     def generator(self):
         settings = get_settings()
-        provider = os.environ.get("LLM_PROVIDER", settings.llm_provider)
+        provider = settings.llm_provider
 
         if provider == "api":
             from langchain_openai import ChatOpenAI
             return ChatOpenAI(
-                model=os.environ.get("API_MODEL_NAME", settings.api_model_name),
-                api_key=os.environ.get("API_KEY", settings.api_key),
-                base_url=os.environ.get("API_BASE_URL", settings.api_base_url),
+                model=settings.api_model_name,
+                api_key=settings.api_key,
+                base_url=settings.api_base_url,
                 temperature=0.3,
-                max_tokens=2048,
+                max_tokens=20480,
             )
 
         return ChatOllama(
-            model=os.environ.get("OLLAMA_CHAT_MODEL", settings.chat_model_name),
-            base_url=os.environ.get("OLLAMA_BASE_URL", settings.ollama_base_url),
+            model=settings.chat_model_name,
+            base_url=settings.ollama_base_url,
             temperature=0.3,
             num_ctx=4096,
         )
 
 
 class EmbeddingsFactory(BaseModelFactory):
-    def generator(self) -> OllamaEmbeddings:
+    def generator(self):
         settings = get_settings()
+        embed_provider = settings.embed_provider
+
+        if embed_provider == "api":
+            from langchain_openai import OpenAIEmbeddings
+            embed_api_key = settings.embed_api_key or settings.api_key
+            embed_base_url = settings.embed_api_base_url or None
+            return OpenAIEmbeddings(
+                model=settings.embed_model_name,
+                api_key=embed_api_key,
+                base_url=embed_base_url,
+                chunk_size=64,
+            )
+
         return OllamaEmbeddings(
             model=os.environ.get("OLLAMA_EMBEDDING_MODEL", settings.embedding_model_name),
             base_url=os.environ.get("OLLAMA_BASE_URL", settings.ollama_base_url),

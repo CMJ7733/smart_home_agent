@@ -41,7 +41,7 @@ def _get_milvus_connection():
     return host, port
 
 
-def _ensure_collection_exists(host: str, port: str):
+def _ensure_collection_exists():
     """Create user_preferences collection with schema + indexes if it does not exist."""
     if utility.has_collection(_COLLECTION_NAME, using="default"):
         return
@@ -75,6 +75,7 @@ def _build_vectorstore(host: str, port: str) -> Milvus:
         embedding_function=embed_model,
         collection_name=_COLLECTION_NAME,
         connection_args={"host": host, "port": port},
+        vector_field="preference_vector",
         auto_id=True,
         enable_dynamic_field=True,
     )
@@ -83,7 +84,8 @@ def _build_vectorstore(host: str, port: str) -> Milvus:
 class MemoryGraph:
     def __init__(self):
         host, port = _get_milvus_connection()
-        _ensure_collection_exists(host, port)
+        _ensure_collection_exists()
+        Collection(_COLLECTION_NAME, using="default").load()
         self._host = host
         self._port = port
         self._vs: Milvus | None = None
@@ -119,12 +121,24 @@ class MemoryGraph:
             response = chat_model.invoke(messages)
 
             # 3. Parse JSON from LLM response
+            content = response.content.strip()
+            # 剥掉 reasoning model 的 <think>...</think> 块
+            content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+            # 兼容 markdown 代码块
+            if content.startswith("```"):
+                parts = content.split("```")
+                content = parts[1] if len(parts) > 1 else content
+                content = re.sub(r"^[a-zA-Z]+\n", "", content, count=1)
+                content = content.strip()
+            # 容错：定位首个 '{' 作为 JSON 起点
+            brace = content.find("{")
+            if brace > 0:
+                content = content[brace:]
             try:
                 decoder = json.JSONDecoder()
-                raw, end_idx = decoder.raw_decode(response.content)
-                raw = json.dumps(raw)  # 重新序列化为字符串
+                raw, _ = decoder.raw_decode(content)
             except ValueError:
-                logger.warning("[MemoryGraph] LLM response did not contain valid JSON")
+                logger.warning(f"[MemoryGraph] LLM response did not contain valid JSON: {response.content[:200]}")
                 return
 
             # 4. Inject metadata

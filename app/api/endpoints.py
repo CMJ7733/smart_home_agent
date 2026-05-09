@@ -119,8 +119,10 @@ async def chat_stream(websocket: WebSocket, session_id: str):
                 "intent": result.get("current_intent", ""),
             })
 
-            # Trigger preference extraction after every turn (fire-and-forget)
+            # Trigger preference extraction and eval log writing (fire-and-forget)
             asyncio.create_task(_extract_preferences_task(user_id, state["chat_history"]))
+            chat_req = ChatRequest(message=user_input, session_id=session_id, user_id=user_id)
+            asyncio.create_task(_write_eval_log_task(result, chat_req))
     except WebSocketDisconnect:
         pass
 
