@@ -40,6 +40,12 @@ class Settings(BaseSettings):
     # Evaluation DB (Phase 3)
     eval_db_path: str = "data/eval_logs.db"
 
+    # Huawei IoTDA (Phase IoTDA)
+    iotda_endpoint: str = ""          # e.g. "xxxxxx.iotda.cn-north-4.myhuaweicloud.com" (无 https://)
+    iotda_project_id: str = ""
+    iotda_ak: str = ""
+    iotda_sk: str = ""
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
