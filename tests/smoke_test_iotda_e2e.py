@@ -186,12 +186,12 @@ def test_t10_shadow_bedroom_ac_temperature():
     assert temp == 24, f"Expected temperature=24 in shadow (last write was T7 graph test: 卧室空调调到24度), got: {props}"
 
 
-def test_t11_shadow_bedroom_curtain_open():
+def test_t11_shadow_bedroom_curtain_closed():
     registry = _get_registry()
     device_id = registry.lookup("卧室", "curtain")["device_id"]
     props = _get_shadow_properties(device_id)
     position = props.get("position")
-    assert position == "open", f"Expected position='open' in shadow, got properties: {props}"
+    assert position == "closed", f"Expected position='closed' in shadow (T8 closed it after T4 opened it), got: {props}"
 
 
 # --------------------------------------------------------------------------- #
@@ -221,7 +221,7 @@ def main():
     print("\n--- Layer 3: Shadow verification ---")
     run_test("[T9]  shadow: 卧室 light → on=True", test_t9_shadow_bedroom_light_on)
     run_test("[T10] shadow: 卧室 AC → temperature=24", test_t10_shadow_bedroom_ac_temperature)
-    run_test("[T11] shadow: 卧室 curtain → position=open", test_t11_shadow_bedroom_curtain_open)
+    run_test("[T11] shadow: 卧室 curtain → position=closed", test_t11_shadow_bedroom_curtain_closed)
 
     print("=" * 60)
     total = len(results)
