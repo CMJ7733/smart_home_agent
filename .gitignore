@@ -21,4 +21,4 @@ rag/chroma_db/
 *.text
 *.yml
 
-config.py
+config.pydocs/
