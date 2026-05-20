@@ -23,4 +23,28 @@ SCENE_TEMPLATES: dict[str, list[dict]] = {
 
 @tool(description="执行预设场景模式，scene_name: 场景名称（如：睡眠模式、离家模式、观影模式）")
 def activate_scene(scene_name: str) -> str:
-    raise NotImplementedError("Phase 1: 待实现")
+    actions = SCENE_TEMPLATES.get(scene_name)
+    if actions is None:
+        available = "、".join(SCENE_TEMPLATES.keys())
+        return f"未找到场景 '{scene_name}'，可用场景：{available}"
+
+    from app.tools.device_api import toggle_light, set_temperature, control_curtain, start_robot_vacuum
+    tool_map = {
+        "toggle_light": toggle_light,
+        "set_temperature": set_temperature,
+        "control_curtain": control_curtain,
+        "start_robot_vacuum": start_robot_vacuum,
+    }
+
+    results = []
+    for action in actions:
+        tool_fn = tool_map.get(action.get("tool", ""))
+        if not tool_fn:
+            results.append(f"未知工具: {action.get('tool')}")
+            continue
+        try:
+            results.append(str(tool_fn.invoke(action.get("args", {}))))
+        except Exception as e:
+            results.append(f"{action.get('tool')} 失败: {e}")
+
+    return f"{scene_name}已激活：" + "；".join(results)
