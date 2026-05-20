@@ -1,7 +1,7 @@
 import yaml
 from pathlib import Path
 
-DEVICE_CONFIG_PATH = Path("config/iotda_devices.yml")
+DEVICE_CONFIG_PATH = Path(__file__).parent.parent.parent / "config" / "iotda_devices.yml"
 
 
 class DeviceNotFoundError(Exception):

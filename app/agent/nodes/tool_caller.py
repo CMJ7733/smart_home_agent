@@ -3,17 +3,11 @@ from app.tools.device_api import (
     set_temperature, toggle_light, control_curtain, start_robot_vacuum,
 )
 
-_TOOL_MAP = {
-    "toggle_light": toggle_light,
-    "set_temperature": set_temperature,
-    "control_curtain": control_curtain,
-    "start_robot_vacuum": start_robot_vacuum,
-}
-
 
 def _execute_scene_actions(actions: list[dict]) -> dict:
     """Execute a pre-planned list of tool actions from scene_planner_node."""
     # Re-resolve at call time so unit-test patches on module names take effect.
+    # query_device_status intentionally excluded: scenes only control state, never query it.
     tool_map = {
         "toggle_light": toggle_light,
         "set_temperature": set_temperature,
