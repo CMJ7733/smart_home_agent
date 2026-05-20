@@ -41,7 +41,8 @@ class Settings(BaseSettings):
     eval_db_path: str = "data/eval_logs.db"
 
     # Huawei IoTDA (Phase IoTDA)
-    iotda_endpoint: str = ""          # e.g. "xxxxxx.iotda.cn-north-4.myhuaweicloud.com" (无 https://)
+    iotda_endpoint: str = ""          # 应用侧 REST: "xxxxxx.st1.iotda-app.cn-north-4.myhuaweicloud.com" (无 https://)
+    iotda_device_endpoint: str = ""   # 设备侧 MQTT: "xxxxxx.st1.iotda-device.cn-north-4.myhuaweicloud.com"
     iotda_project_id: str = ""
     iotda_ak: str = ""
     iotda_sk: str = ""

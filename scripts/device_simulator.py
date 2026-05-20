@@ -224,7 +224,7 @@ def main():
     from dotenv import load_dotenv
     load_dotenv()
 
-    endpoint = os.environ["IOTDA_ENDPOINT"]
+    endpoint = os.environ.get("IOTDA_DEVICE_ENDPOINT") or os.environ["IOTDA_ENDPOINT"]
 
     with open(DEVICE_CONFIG_PATH, encoding="utf-8") as f:
         config = yaml.safe_load(f)
