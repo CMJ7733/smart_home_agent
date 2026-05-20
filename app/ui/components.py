@@ -1,3 +1,5 @@
+from html import escape
+
 import streamlit as st
 
 
@@ -25,15 +27,15 @@ def device_card(name: str, icon: str, online: bool, on: bool, properties: dict) 
     active_class = "sh-card-active" if (online and on) else ""
     border_color = "#EF4444" if not online else "#E2E8F0"
     prop_lines = "".join(
-        f'<div style="font-size:12px;color:#64748B;">{k}: {v}</div>'
+        f'<div style="font-size:12px;color:#64748B;">{escape(str(k))}: {escape(str(v))}</div>'
         for k, v in properties.items()
     )
     badge = status_badge(online)
     st.markdown(
         f"""<div class="sh-card {active_class}"
                  style="border-color:{border_color};">
-            <div style="font-size:24px;margin-bottom:8px;">{icon}</div>
-            <div style="font-weight:600;color:#1E293B;margin-bottom:4px;">{name}</div>
+            <div style="font-size:24px;margin-bottom:8px;">{escape(icon)}</div>
+            <div style="font-weight:600;color:#1E293B;margin-bottom:4px;">{escape(name)}</div>
             {badge}
             <div style="margin-top:8px;">{prop_lines}</div>
         </div>""",
@@ -44,12 +46,12 @@ def device_card(name: str, icon: str, online: bool, on: bool, properties: dict) 
 def scene_card(name: str, icon: str, summary: str) -> None:
     st.markdown(
         f"""<div class="sh-card">
-            <div style="font-size:28px;margin-bottom:8px;">{icon}</div>
+            <div style="font-size:28px;margin-bottom:8px;">{escape(icon)}</div>
             <div style="font-weight:600;color:#1E293B;font-size:16px;margin-bottom:8px;">
-                {name}
+                {escape(name)}
             </div>
             <div style="font-size:13px;color:#64748B;line-height:1.6;margin-bottom:12px;">
-                {summary}
+                {escape(summary)}
             </div>
         </div>""",
         unsafe_allow_html=True,
@@ -57,13 +59,14 @@ def scene_card(name: str, icon: str, summary: str) -> None:
 
 
 def metric_card(label: str, value: str | int, subtitle: str = "") -> None:
+    escaped_value = escape(str(value)) if isinstance(value, str) else value
     sub_html = (
-        f'<div class="sh-metric-sub">{subtitle}</div>' if subtitle else ""
+        f'<div class="sh-metric-sub">{escape(subtitle)}</div>' if subtitle else ""
     )
     st.markdown(
         f"""<div class="sh-metric">
-            <div class="sh-metric-value">{value}</div>
-            <div class="sh-metric-label">{label}</div>
+            <div class="sh-metric-value">{escaped_value}</div>
+            <div class="sh-metric-label">{escape(label)}</div>
             {sub_html}
         </div>""",
         unsafe_allow_html=True,
@@ -78,8 +81,8 @@ def tool_call_card(tool_calls: list[dict]) -> None:
         ok = tc.get("success", True)
         icon = "✅" if ok else "❌"
         css_cls = "sh-tool-result-ok" if ok else "sh-tool-result-err"
-        device = tc.get("device", tc.get("action", ""))
-        result = tc.get("result", "")
+        device = escape(str(tc.get("device", tc.get("action", ""))))
+        result = escape(str(tc.get("result", "")))
         rows += (
             f'<div class="{css_cls}">'
             f"{icon} {device} → {result}"
