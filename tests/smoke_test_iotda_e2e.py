@@ -51,7 +51,7 @@ def _make_state(user_input: str) -> AgentState:
         chat_history=[],
         extracted_entities={},
         retrieved_context=[],
-        current_intent="device_control",
+        current_intent="",
         tool_calls=[],
         final_response="",
         trace_id=f"smoke-trace-{uuid.uuid4().hex[:8]}",
@@ -188,8 +188,8 @@ def test_t11_shadow_bedroom_curtain_open():
     registry = _get_registry()
     device_id = registry.lookup("卧室", "curtain")["device_id"]
     props = _get_shadow_properties(device_id)
-    action = props.get("action") or props.get("position")
-    assert action == "open", f"Expected action/position='open' in shadow, got properties: {props}"
+    position = props.get("position")
+    assert position == "open", f"Expected position='open' in shadow, got properties: {props}"
 
 
 # --------------------------------------------------------------------------- #
