@@ -110,7 +110,9 @@ class DeviceSimulator:
             self._logger.error(f"Invalid JSON: {msg.payload}")
             return
 
-        command_id = payload.get("command_id", "")
+        # command_id is in the topic: .../sys/commands/{command_id}
+        topic_parts = msg.topic.split("/")
+        command_id = topic_parts[-1] if topic_parts[-1] != "commands" else payload.get("command_id", "")
         command_name = payload.get("command_name", "")
         paras = payload.get("paras", {})
 

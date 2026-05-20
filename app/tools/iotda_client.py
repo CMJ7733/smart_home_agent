@@ -64,7 +64,7 @@ class IotdaClient:
         body = {"service_id": service_id, "command_name": command_name, "paras": params}
         for attempt in range(2):
             try:
-                resp = requests.post(url, headers=self._headers(), json=body, timeout=10)
+                resp = requests.post(url, headers=self._headers(), json=body, timeout=25)
             except requests.exceptions.Timeout:
                 raise IotdaError("TIMEOUT", f"Command timed out for device {device_id}")
 
