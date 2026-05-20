@@ -1,5 +1,5 @@
 import streamlit as st
-from app.ui.components import header_bar, device_card, status_badge
+from app.ui.components import device_card
 from app.tools.device_registry import DeviceRegistry
 from app.tools.iotda_client import IotdaClient
 from app.core.config import get_settings
