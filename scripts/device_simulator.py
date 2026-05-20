@@ -29,7 +29,7 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 
-DEVICE_CONFIG_PATH = Path("config/iotda_devices.yml")
+DEVICE_CONFIG_PATH = Path(__file__).parent.parent / "config" / "iotda_devices.yml"
 
 
 def _mqtt_password(device_secret: str, client_id: str) -> str:
@@ -76,7 +76,7 @@ class DeviceSimulator:
         )
 
         self._mqtt.username_pw_set(username=device_id, password=password)
-        self._mqtt.tls_set(cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_TLS)
+        self._mqtt.tls_set(cert_reqs=ssl.CERT_REQUIRED)
         self._mqtt.on_connect = self._on_connect
         self._mqtt.on_disconnect = self._on_disconnect
         self._mqtt.on_message = self._on_message
@@ -118,6 +118,9 @@ class DeviceSimulator:
             self.handle_command(paras)
         else:
             self._logger.warning(f"Unknown command: {command_name}")
+            self._send_command_response(command_id, command_name, result_code=1)
+            self._report_properties()
+            return
 
         self._send_command_response(command_id, command_name)
         self._report_properties()
@@ -137,14 +140,14 @@ class DeviceSimulator:
         self._mqtt.publish(topic, json.dumps(payload), qos=1)
         self._logger.info(f"Properties reported: {self._state}")
 
-    def _send_command_response(self, command_id: str, command_name: str):
+    def _send_command_response(self, command_id: str, command_name: str, result_code: int = 0):
         if not command_id:
             return
         topic = f"$oc/devices/{self.device_id}/sys/commands/{command_id}/response"
         payload = {
-            "result_code": 0,
+            "result_code": result_code,
             "response_name": f"{command_name}Response",
-            "paras": {"result": "success"},
+            "paras": {"result": "success" if result_code == 0 else "unknown_command"},
         }
         self._mqtt.publish(topic, json.dumps(payload), qos=1)
 
@@ -174,7 +177,7 @@ class ACSimulator(DeviceSimulator):
         self._state = {"on": False, "temperature": 26}
 
     def handle_command(self, paras: dict):
-        self._state["on"] = bool(paras.get("on", True))
+        self._state["on"] = bool(paras.get("on", self._state["on"]))
         self._state["temperature"] = int(paras.get("temperature", self._state["temperature"]))
 
 
@@ -226,20 +229,27 @@ def main():
     with open(DEVICE_CONFIG_PATH, encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
+    if not config:
+        logging.error("Device config is empty or missing: %s", DEVICE_CONFIG_PATH)
+        return
+
     simulators: list[DeviceSimulator] = []
     for room, types in config.items():
         for dtype, info in types.items():
             cls = _SIMULATOR_MAP.get(dtype)
             if not cls:
                 continue
-            sim = cls(
-                device_id=info["device_id"],
-                device_secret=info["device_secret"],
-                endpoint=endpoint,
-                room=room,
-                device_type=dtype,
-            )
-            simulators.append(sim)
+            try:
+                sim = cls(
+                    device_id=info["device_id"],
+                    device_secret=info["device_secret"],
+                    endpoint=endpoint,
+                    room=room,
+                    device_type=dtype,
+                )
+                simulators.append(sim)
+            except KeyError as e:
+                logging.warning("Skipping %s/%s — missing key %s in config", room, dtype, e)
 
     logging.info(f"Starting {len(simulators)} device simulators...")
     for sim in simulators:
