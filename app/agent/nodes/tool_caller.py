@@ -1,15 +1,47 @@
-# TODO (Phase 1): 设备工具调用节点
-# 输入: AgentState.extracted_entities
-# 输出: AgentState.tool_calls (已执行动作列表)
-# 调用: app/tools/device_api.py, app/tools/scene_api.py
-# 复用现有 agent/tools/middleware.py 的 monitor_tool 逻辑接入 LangSmith
-
 from app.agent.state import AgentState
-from app.tools.device_api import set_temperature, toggle_light, control_curtain, start_robot_vacuum
+from app.tools.device_api import (
+    set_temperature, toggle_light, control_curtain, start_robot_vacuum,
+)
+
+_TOOL_MAP = {
+    "toggle_light": toggle_light,
+    "set_temperature": set_temperature,
+    "control_curtain": control_curtain,
+    "start_robot_vacuum": start_robot_vacuum,
+}
+
+
+def _execute_scene_actions(actions: list[dict]) -> dict:
+    """Execute a pre-planned list of tool actions from scene_planner_node."""
+    # Re-resolve at call time so unit-test patches on module names take effect.
+    tool_map = {
+        "toggle_light": toggle_light,
+        "set_temperature": set_temperature,
+        "control_curtain": control_curtain,
+        "start_robot_vacuum": start_robot_vacuum,
+    }
+    results = []
+    for action in actions:
+        tool_name = action.get("tool", "")
+        args = action.get("args", {})
+        tool_fn = tool_map.get(tool_name)
+        if not tool_fn:
+            results.append({"action": tool_name, "args": args, "result": f"未知工具: {tool_name}"})
+            continue
+        try:
+            result = tool_fn.invoke(args)
+            results.append({"action": tool_name, "args": args, "result": str(result)})
+        except Exception as e:
+            results.append({"action": tool_name, "args": args, "result": f"执行失败: {e}"})
+    return {"tool_calls": results}
 
 
 def tool_caller_node(state: AgentState) -> AgentState:
-    """设备工具调用节点: 根据 extracted_entities 调用对应设备 API"""
+    """设备工具调用节点: 根据 extracted_entities 调用对应设备 API，或执行 scene_planner 的动作列表"""
+    existing = state.get("tool_calls", [])
+    if existing and isinstance(existing[0], dict) and "tool" in existing[0]:
+        return _execute_scene_actions(existing)
+
     entities = state.get("extracted_entities", {})
     device = entities.get("device", "")
     room = entities.get("room", "")
