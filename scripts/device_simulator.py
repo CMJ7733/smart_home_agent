@@ -117,7 +117,7 @@ class DeviceSimulator:
         command_name = payload.get("command_name", "")
         paras = payload.get("paras", {})
 
-        self._logger.info(f"Command received: {command_name} {paras} | topic={msg.topic} | cmd_id={command_id}")
+        self._logger.info(f"Command received: {command_name} {paras}")
 
         if command_name == self.COMMAND_NAME:
             self.handle_command(paras)
@@ -154,7 +154,6 @@ class DeviceSimulator:
             "response_name": f"{command_name}Response",
             "paras": {"result": "success" if result_code == 0 else "unknown_command"},
         }
-        self._logger.info(f"ACK → {topic}")
         self._mqtt.publish(topic, json.dumps(payload), qos=1)
 
 
