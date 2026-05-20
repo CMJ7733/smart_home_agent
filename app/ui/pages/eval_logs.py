@@ -42,7 +42,7 @@ def render() -> None:
     if search:
         logs = [l for l in logs if search.lower() in l.get("query", "").lower()]
     if intent_filter != "全部":
-        logs = [l for l in logs if l["intent"] == intent_filter]
+        logs = [l for l in logs if l.get("intent") == intent_filter]
 
     logs = list(reversed(logs))
 

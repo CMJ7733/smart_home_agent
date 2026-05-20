@@ -40,8 +40,8 @@ with st.sidebar:
             },
         },
     )
-    st.sidebar.markdown("---")
-    st.sidebar.caption("Smart Home Agent v1.0")
+    st.markdown("---")
+    st.caption("Smart Home Agent v1.0")
 
 PAGE_MAP = {
     "对话": chat.render,
