@@ -85,6 +85,21 @@ class IotdaClient:
 
             return resp.json()
 
+    def get_device_info(self, device_id: str) -> dict:
+        """Returns device info including `status` field: ONLINE | OFFLINE | ABNORMAL | INACTIVE."""
+        url = f"https://{self._endpoint}/v5/iot/{self._project_id}/devices/{device_id}"
+        try:
+            resp = requests.get(url, headers=self._headers(), timeout=10)
+        except requests.exceptions.Timeout:
+            raise IotdaError("TIMEOUT", f"Device info query timed out for device {device_id}")
+        if not resp.ok:
+            error = resp.json() if resp.content else {}
+            raise IotdaError(
+                error.get("error_code", f"HTTP_{resp.status_code}"),
+                error.get("error_msg", resp.text[:200]),
+            )
+        return resp.json()
+
     def get_device_shadow(self, device_id: str) -> dict:
         url = f"https://{self._endpoint}/v5/iot/{self._project_id}/devices/{device_id}/shadow"
         try:

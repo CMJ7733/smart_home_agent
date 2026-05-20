@@ -64,11 +64,11 @@ def metric_card(label: str, value: str | int, subtitle: str = "") -> None:
         f'<div class="sh-metric-sub">{escape(subtitle)}</div>' if subtitle else ""
     )
     st.markdown(
-        f"""<div class="sh-metric">
-            <div class="sh-metric-value">{escaped_value}</div>
-            <div class="sh-metric-label">{escape(label)}</div>
-            {sub_html}
-        </div>""",
+        f'<div class="sh-metric">'
+        f'<div class="sh-metric-value">{escaped_value}</div>'
+        f'<div class="sh-metric-label">{escape(label)}</div>'
+        f'{sub_html}'
+        f'</div>',
         unsafe_allow_html=True,
     )
 

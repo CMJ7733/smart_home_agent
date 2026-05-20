@@ -31,7 +31,8 @@ def _load_shadows(devices: list[dict]) -> dict[str, dict]:
             shadow = client.get_device_shadow(dev["device_id"])
             items = shadow.get("shadow", [])
             props = items[0].get("reported", {}).get("properties", {}) if items else {}
-            status = shadow.get("device_status", "OFFLINE")
+            device_info = client.get_device_info(dev["device_id"])
+            status = device_info.get("status", "OFFLINE")
             result[dev["device_id"]] = {"online": status == "ONLINE", **props}
         except Exception:
             result[dev["device_id"]] = {"online": False}
