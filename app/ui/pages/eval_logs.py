@@ -40,7 +40,7 @@ def render() -> None:
         return
 
     if search:
-        logs = [l for l in logs if search.lower() in l["query"].lower()]
+        logs = [l for l in logs if search.lower() in l.get("query", "").lower()]
     if intent_filter != "全部":
         logs = [l for l in logs if l["intent"] == intent_filter]
 
@@ -58,7 +58,7 @@ def render() -> None:
         rows.append({
             "#": i,
             "时间": log["created_at"][:16] if log.get("created_at") else "-",
-            "查询摘要": log["query"][:60],
+            "查询摘要": log.get("query", "")[:60],
             "意图": log.get("intent", "-"),
             "反馈": _feedback_label(log.get("user_feedback")),
             "RAGAS 分": score_str,
@@ -70,7 +70,7 @@ def render() -> None:
     idx = st.selectbox(
         "选择行号查看详情",
         options=range(len(logs)),
-        format_func=lambda i: f"#{i} — {logs[i]['query'][:50]}",
+        format_func=lambda i: f"#{i} — {(logs[i].get('query') or '')[:50]}",
         key="log_detail_idx",
     )
 
@@ -90,16 +90,22 @@ def render() -> None:
             st.markdown("**召回上下文**")
             try:
                 contexts = json.loads(log.get("contexts_json", "[]"))
-                for ctx in contexts:
-                    st.markdown(f"- {ctx[:120]}")
+                if isinstance(contexts, list):
+                    for ctx in contexts:
+                        st.markdown(f"- {ctx[:120]}")
+                else:
+                    st.write("-")
             except Exception:
                 st.write("-")
 
             st.markdown("**Tool Calls 轨迹**")
             try:
                 traj = json.loads(log.get("trajectory_json", "[]"))
-                for t in traj:
-                    st.json(t)
+                if isinstance(traj, list):
+                    for t in traj:
+                        st.json(t)
+                else:
+                    st.write("-")
             except Exception:
                 st.write("-")
 
