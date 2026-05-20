@@ -110,13 +110,14 @@ class DeviceSimulator:
             self._logger.error(f"Invalid JSON: {msg.payload}")
             return
 
-        # command_id is in the topic: .../sys/commands/{command_id}
+        # IoTDA delivers: .../sys/commands/request_id={uuid} — strip the prefix
         topic_parts = msg.topic.split("/")
-        command_id = topic_parts[-1] if topic_parts[-1] != "commands" else payload.get("command_id", "")
+        raw_id = topic_parts[-1] if topic_parts[-1] != "commands" else payload.get("command_id", "")
+        command_id = raw_id.removeprefix("request_id=")
         command_name = payload.get("command_name", "")
         paras = payload.get("paras", {})
 
-        self._logger.info(f"Command received: {command_name} {paras}")
+        self._logger.info(f"Command received: {command_name} {paras} | topic={msg.topic} | cmd_id={command_id}")
 
         if command_name == self.COMMAND_NAME:
             self.handle_command(paras)
@@ -153,6 +154,7 @@ class DeviceSimulator:
             "response_name": f"{command_name}Response",
             "paras": {"result": "success" if result_code == 0 else "unknown_command"},
         }
+        self._logger.info(f"ACK → {topic}")
         self._mqtt.publish(topic, json.dumps(payload), qos=1)
 
 
