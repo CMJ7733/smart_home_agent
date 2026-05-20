@@ -16,6 +16,7 @@ class ChatResponse(BaseModel):
     response: str
     trace_id: str
     intent: Optional[str] = None
+    tool_calls: list = []
 
 
 class FeedbackRequest(BaseModel):

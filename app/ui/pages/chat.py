@@ -91,17 +91,23 @@ def render() -> None:
         col1, col2, col3 = st.columns([1, 1, 6])
         with col1:
             if st.button("👍", use_container_width=True, key="fb_up"):
-                requests.post(
-                    f"{API_BASE}/feedback",
-                    params={"trace_id": st.session_state.last_trace_id, "feedback": 1},
-                    timeout=5,
-                )
-                st.toast("感谢反馈 👍")
+                try:
+                    requests.post(
+                        f"{API_BASE}/feedback",
+                        params={"trace_id": st.session_state.last_trace_id, "feedback": 1},
+                        timeout=5,
+                    )
+                    st.toast("感谢反馈 👍")
+                except Exception:
+                    st.toast("反馈提交失败", icon="❌")
         with col2:
             if st.button("👎", use_container_width=True, key="fb_down"):
-                requests.post(
-                    f"{API_BASE}/feedback",
-                    params={"trace_id": st.session_state.last_trace_id, "feedback": -1},
-                    timeout=5,
-                )
-                st.toast("感谢反馈 👎")
+                try:
+                    requests.post(
+                        f"{API_BASE}/feedback",
+                        params={"trace_id": st.session_state.last_trace_id, "feedback": -1},
+                        timeout=5,
+                    )
+                    st.toast("感谢反馈 👎")
+                except Exception:
+                    st.toast("反馈提交失败", icon="❌")

@@ -85,6 +85,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> ChatR
         response=result.get("final_response", ""),
         trace_id=result.get("trace_id", ""),
         intent=result.get("current_intent", ""),
+        tool_calls=result.get("tool_calls", []),
     )
 
 
