@@ -1,8 +1,11 @@
+import logging
 import requests
 import streamlit as st
 import plotly.graph_objects as go
 from collections import Counter
 from app.ui.components import metric_card
+
+_logger = logging.getLogger(__name__)
 
 API_BASE = "http://localhost:8000/api/v1"
 
@@ -22,7 +25,7 @@ def render() -> None:
         days = st.slider("时间范围（天）", 1, 30, 7, key="dash_days")
     with col_btn:
         st.markdown("<br>", unsafe_allow_html=True)
-        refresh = st.button("🔄 刷新", key="dash_refresh")
+        st.button("🔄 刷新", key="dash_refresh")
 
     try:
         resp = requests.get(f"{API_BASE}/eval/dashboard", params={"days": days}, timeout=10)
@@ -86,6 +89,7 @@ def render() -> None:
         logs = EvalLogRepo().query_recent(days)
         intent_dist = _build_intent_dist(logs)
     except Exception:
+        _logger.warning("Failed to load intent distribution", exc_info=True)
         intent_dist = {}
 
     if intent_dist:
