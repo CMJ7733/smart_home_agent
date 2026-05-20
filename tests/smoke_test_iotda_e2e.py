@@ -141,6 +141,8 @@ async def _invoke_graph(user_input: str) -> AgentState:
     return await graph.ainvoke(state)
 
 
+# NOTE: asyncio.run() is called once per test (T6-T8). Safe in CPython 3.10+.
+# If T7 or T8 raises "attached to a different loop", consolidate into one asyncio.run() call.
 def test_t6_graph_bedroom_light_on():
     result = asyncio.run(_invoke_graph("把卧室灯打开"))
     intent = result.get("current_intent", "")
@@ -181,7 +183,7 @@ def test_t10_shadow_bedroom_ac_temperature():
     device_id = registry.lookup("卧室", "ac")["device_id"]
     props = _get_shadow_properties(device_id)
     temp = props.get("temperature")
-    assert temp == 22, f"Expected temperature=22 in shadow, got properties: {props}"
+    assert temp == 24, f"Expected temperature=24 in shadow (last write was T7 graph test: 卧室空调调到24度), got: {props}"
 
 
 def test_t11_shadow_bedroom_curtain_open():
@@ -218,7 +220,7 @@ def main():
     # Layer 3
     print("\n--- Layer 3: Shadow verification ---")
     run_test("[T9]  shadow: 卧室 light → on=True", test_t9_shadow_bedroom_light_on)
-    run_test("[T10] shadow: 卧室 AC → temperature=22", test_t10_shadow_bedroom_ac_temperature)
+    run_test("[T10] shadow: 卧室 AC → temperature=24", test_t10_shadow_bedroom_ac_temperature)
     run_test("[T11] shadow: 卧室 curtain → position=open", test_t11_shadow_bedroom_curtain_open)
 
     print("=" * 60)
