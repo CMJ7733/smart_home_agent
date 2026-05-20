@@ -147,7 +147,7 @@ class DeviceSimulator:
     def _send_command_response(self, command_id: str, command_name: str, result_code: int = 0):
         if not command_id:
             return
-        topic = f"$oc/devices/{self.device_id}/sys/commands/{command_id}/response"
+        topic = f"$oc/devices/{self.device_id}/sys/commands/response/request_id={command_id}"
         payload = {
             "result_code": result_code,
             "response_name": f"{command_name}Response",
