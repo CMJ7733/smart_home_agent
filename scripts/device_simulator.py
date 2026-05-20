@@ -32,11 +32,11 @@ logging.basicConfig(
 DEVICE_CONFIG_PATH = Path(__file__).parent.parent / "config" / "iotda_devices.yml"
 
 
-def _mqtt_password(device_secret: str, client_id: str) -> str:
-    """HMAC-SHA256(device_secret, client_id) as hex — IoTDA MQTT auth formula."""
+def _mqtt_password(device_secret: str, timestamp: str) -> str:
+    """IoTDA MQTT auth: HMAC-SHA256(key=timestamp, msg=device_secret)."""
     return hmac.new(
+        timestamp.encode(),
         device_secret.encode(),
-        client_id.encode(),
         hashlib.sha256,
     ).hexdigest()
 
@@ -62,9 +62,11 @@ class DeviceSimulator:
         self._logger = logging.getLogger(f"[{room}-{device_type}]")
         self._state: dict = {}
 
-        timestamp = str(int(time.time()))
+        # IoTDA expects YYYYMMDDhh (UTC) format; password = HMAC-SHA256(key=timestamp, msg=secret)
+        import datetime
+        timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d%H")
         client_id = f"{device_id}_0_0_{timestamp}"
-        password = _mqtt_password(device_secret, client_id)
+        password = _mqtt_password(device_secret, timestamp)
 
         # paho-mqtt >= 2.0.0: requires callback_api_version
         # Use VERSION1 for backward-compatible callback signatures (rc as int, etc.)
